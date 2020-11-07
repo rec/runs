@@ -1,14 +1,16 @@
-# from unittest import mock
-# import tdir
-
+from unittest import mock
 import runs
 import unittest
 
-FILENAME = 'a_file.txt'
 
-
-# @mock.patch('runs.subprocess.call', autospec=True)
+@mock.patch('runs.subprocess.run', autospec=True)
 class TestRuns(unittest.TestCase):
-    #   @tdir(FILENAME)
-    def test_existing(self):
-        assert runs
+    def test_simple(self, run):
+        results = list(runs('hello world'))
+        run.assert_called_once_with(['hello', 'world'])
+        assert len(results) == 1
+
+    def test_shell(self, run):
+        results = list(runs('hello world', shell=True))
+        run.assert_called_once_with('hello world', shell=True)
+        assert len(results) == 1

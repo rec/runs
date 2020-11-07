@@ -13,16 +13,15 @@ __all__ = 'call', 'check_call', 'check_output', 'run'
 
 
 def _wrap(name):
-    function = getattr(subprocess, name)
-
-    @functools.wraps(function)
+    @functools.wraps(getattr(subprocess, name))
     def wrapped(cmd, *args, on_exception=None, **kwargs):
         lines = (c.strip() for c in cmd.splitlines())
         lines = (c for c in lines if c)
         if not kwargs.get('shell'):
-            lines = (shlex.strip(c) for c in lines)
+            lines = (shlex.split(c) for c in lines)
 
         for c in lines:
+            function = getattr(subprocess, name)
             try:
                 result = function(c, *args, **kwargs)
             except Exception:
@@ -41,4 +40,4 @@ check_call = _wrap('check_call')
 check_output = _wrap('check_output')
 run = _wrap('run')
 
-xmod(run)
+runs = xmod(run, __name__)
