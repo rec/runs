@@ -5,16 +5,18 @@
 
 import functools
 import shlex
-import subprocess as sp
+import subprocess
 import xmod
 
-__all__ = 'call', 'check_call', 'check_output', 'run', 'runs'
 __version__ = '0.2.0'
+__all__ = 'call', 'check_call', 'check_output', 'run'
 
 
-def _wrap(f):
-    @functools.wraps(f)
-    def wrapped(cmd, *args, **kwargs):
+def _wrap(name):
+    function = getattr(subprocess, name)
+
+    @functools.wraps(function)
+    def wrapped(cmd, *args, on_exception=None, **kwargs):
         assert isinstance(cmd, str)
 
         lines = (c.strip() for c in cmd.splitlines())
@@ -23,17 +25,22 @@ def _wrap(f):
             lines = (shlex.strip(c) for c in lines)
 
         for c in lines:
-            yield f(c, *args, **kwargs)
+            try:
+                result = function(c, *args, **kwargs)
+            except Exception:
+                if not on_exception:
+                    raise
+                if callable(on_exception):
+                    on_exception(c)
+            else:
+                yield result
 
     return wrapped
 
 
-call = _wrap(sp.call)
+call = _wrap('call')
+check_call = _wrap('check_call')
+check_output = _wrap('check_output')
+run = _wrap('run')
 
-check_call = _wrap(sp.check_call)
-
-check_output = _wrap(sp.check_output)
-
-run = _wrap(sp.run)
-
-runs = xmod(run)
+xmod(run)
