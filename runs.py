@@ -17,8 +17,6 @@ def _wrap(name):
 
     @functools.wraps(function)
     def wrapped(cmd, *args, on_exception=None, **kwargs):
-        assert isinstance(cmd, str)
-
         lines = (c.strip() for c in cmd.splitlines())
         lines = (c for c in lines if c)
         if not kwargs.get('shell'):
