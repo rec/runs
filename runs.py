@@ -53,8 +53,8 @@ def _run(name, cmd, *args, on_exception=None, echo=False, **kwargs):
 
 def _wrap(name):
     @functools.wraps(getattr(subprocess, name))
-    def wrapped(cmd, *args, iterate=False, **kwargs):
-        it = _run(name, cmd, *args, **kwargs)
+    def wrapped(cmd, *args, iterate=False, encoding='utf8', **kwargs):
+        it = _run(name, cmd, *args, encoding=encoding, **kwargs)
         if iterate:
             return it
         return list(it)
