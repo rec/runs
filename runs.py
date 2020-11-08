@@ -6,6 +6,7 @@
 import functools
 import shlex
 import subprocess
+import sys
 import xmod
 
 __version__ = '0.2.0'
@@ -14,12 +15,17 @@ __all__ = 'call', 'check_call', 'check_output', 'run'
 
 def _run(name, cmd, *args, on_exception=None, echo=False, **kwargs):
     echo = echo or (lambda *a: None)
+
     if echo is True:
         echo = '$'
+
     if isinstance(echo, str):
         echo = functools.partial(print, echo)
 
     assert callable(echo)
+
+    if on_exception and not callable(on_exception):
+        on_exception = functools.partial(print, '!', file=sys.stderr)
 
     function = getattr(subprocess, name)
     shell = kwargs.get('shell')
@@ -36,10 +42,10 @@ def _run(name, cmd, *args, on_exception=None, echo=False, **kwargs):
                 result = function(cmd, *args, **kwargs)
 
             except Exception:
-                if not on_exception:
+                if on_exception:
+                    on_exception(line)
+                else:
                     raise
-                if on_exception is not True:
-                    on_exception(cmd)
 
             else:
                 yield result
