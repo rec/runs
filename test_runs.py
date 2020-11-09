@@ -1,5 +1,7 @@
+from pathlib import Path
 from unittest import mock
 import runs
+import tdir
 import unittest
 
 
@@ -42,6 +44,27 @@ class TestRunsMock(unittest.TestCase):
         assert_called(run, 'line one', shell=True)
         assert_called(run, "line 'two # not comment'", shell=True)
 
+    def test_continuation(self, run):
+        lines = """
+           line \\
+           one # a comment
+           line "two # not comment"
+        """
+        results = runs(lines, shell=True)
+        assert len(results) == 2
+        assert_called(run, 'line one', shell=True)
+        assert_called(run, "line 'two # not comment'", shell=True)
+
+    def test_continuation_error(self, run):
+        lines = """
+           line one   # with a comment\\
+           line "two # not comment"
+        """
+        with self.assertRaises(ValueError) as m:
+            runs(lines)
+        err = ('Comments cannot contain a line continuation',)
+        assert m.exception.args == err
+
 
 class TestRunsActual(unittest.TestCase):
     def test_echo(self):
@@ -58,6 +81,14 @@ class TestRunsActual(unittest.TestCase):
         assert begin == 'BEGIN\n'
         assert end == 'END\n'
         assert DIR.issubset(ls.splitlines())
+
+    @tdir
+    def test_shell(self):
+        r = runs.check_output('echo BEGIN > foo.txt', shell=True)
+        assert len(r) == 1
+        p = Path('foo.txt')
+        assert not p.exists()
+        assert r == ['BEGIN > foo.txt\n']
 
 
 DIR = {
