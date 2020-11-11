@@ -2,12 +2,79 @@
 🏃 runs: subprocess with the sharp edges removed 🏃
 -------------------------------------------------------
 
-``subprocess`` is both essential and annoying:
+``subprocess`` is essential but:
 
-* Sometimes ('commands', 'are', 'like', 'this')
-*
+* You can only run one command, not a sequence of them
+
+* Commands to subprocess must be either a sequence of strings or a string,
+  depending on whether shell=True or not
+
+* Results are returned by default as binary strings
+
+``runs`` lets you run a block of text as a sequence of subprocess calls It
+provides nearly drop-in replacements for four key functions from
+``subprocess``: ``call()``, ``check_call()``, ``check_output()``, and ``run()``
+- the big change is that each returns a list of values and not a single value.
+
+The ``runs`` functions also allow comments and line continuations, optional
+logging and error handling, and lazy evaluation.
 
 
+EXAMPLES:
+
+.. code-block:: python
+
+    # Calling runs() on a block of text is like typing
+    # the commands from the keyboard: the results go to stdout and stderr./
+
+    import runs
+    runs('ls')
+    runs.run('ls')  # Same as the previous line
+
+    # runs.check_output() returns a list: one string result for each command
+
+    results = check_output('''
+        echo  line   one  # Here's line one.
+        echo   'line "  two  "'  # and two!
+    ''')
+    assert results == ['line one', 'line "  two  "']
+
+    # Line continuations work too
+    runs('''
+        ls -cail
+
+        # One command that takes many lines.
+        g++ -DDEBUG  -O0 -g -std=c++17 -pthread -I ./include -lm -lstdc++ \\
+          -Wall -Wextra -Wno-strict-aliasing -Wpedantic \\\\
+          -MMD -MP -MF -c src/tests.cpp -o build/./src/tests.cpp.o
+     ''')
+
+
+NOTES:
+
+* Pipes and redirection do not work
+
+.. code-block:: python
+
+    import runs
+    result = runs.check_output('echo "foo" > bar.txt')
+    assert result == ['foo > bar.txt\\n']
+
+I can see no good way to make pipes or redirection work.
+
+*  Environment variables are not expanded
+
+.. code-block:: python
+
+    import runs
+    result = runs.check_output('echo $FOO', env={'FOO': 'bah!'})
+    assert result == ['$FOO\\n']
+
+One could make these substitutions work but it would be more reliable and less
+work to use ``string.format`` or f-strings in Python.
+
+The environment variables *are* visible in any binaries you call, and that's
+the important thing.
 """
 
 import functools
@@ -17,18 +84,21 @@ import sys
 import xmod
 
 __version__ = '0.3.0'
-__all__ = 'call', 'check_call', 'check_output', 'run'
+__all__ = 'call', 'check_call', 'check_output', 'run', 'split_commands'
 
 
-def _run(name, cmd, *args, on_exception=None, echo=False, **kwargs):
+def _run(name, commands, *args, on_exception=None, echo=False, **kwargs):
     if echo is True:
         echo = '$'
 
-    if not callable(echo):
+    if echo == '':
+        echo = print
+
+    if echo and not callable(echo):
         echo = functools.partial(print, echo)
 
     if on_exception is True:
-        on_exception = '!'
+        on_exception = lambda *x: None  # noqa: E731
 
     if not callable(on_exception):
         on_exception = functools.partial(print, on_exception, file=sys.stderr)
@@ -36,7 +106,7 @@ def _run(name, cmd, *args, on_exception=None, echo=False, **kwargs):
     function = getattr(subprocess, name)
     shell = kwargs.get('shell')
 
-    for line in _lines(cmd, echo):
+    for line in split_commands(commands, echo):
         cmd = shlex.split(line, comments=True)
         if shell:
             cmd = ' '.join(shlex.quote(c) for c in cmd)
@@ -53,7 +123,7 @@ def _run(name, cmd, *args, on_exception=None, echo=False, **kwargs):
             yield result
 
 
-def _lines(cmd, echo):
+def split_commands(lines, echo=None):
     waiting = []
 
     def emit():
@@ -62,8 +132,11 @@ def _lines(cmd, echo):
         if parts:
             yield parts
 
-    for line in cmd.splitlines():
-        echo(line)
+    if isinstance(lines, str):
+        lines = lines.splitlines()
+
+    for line in lines:
+        echo and echo(line)
 
         if line.endswith('\\'):
             no_comments = ' '.join(shlex.split(line[:-1], comments=True))
@@ -81,8 +154,8 @@ def _lines(cmd, echo):
 
 def _wrap(name):
     @functools.wraps(getattr(subprocess, name))
-    def wrapped(cmd, *args, iterate=False, encoding='utf8', **kwargs):
-        it = _run(name, cmd, *args, encoding=encoding, **kwargs)
+    def wrapped(commands, *args, iterate=False, encoding='utf8', **kwargs):
+        it = _run(name, commands, *args, encoding=encoding, **kwargs)
         if iterate:
             return it
         return list(it)
@@ -96,3 +169,88 @@ check_output = _wrap('check_output')
 run = _wrap('run')
 
 xmod(run, __name__)
+
+
+_ARGS = """
+  {function}(
+    commands,
+    *args,
+    on_exception=False,
+    echo=False,
+    iterate=False,
+    encoding='utf8',
+    **kwargs)
+  {summary}
+  See the help for ``subprocess.{function}`` for more information.
+
+Arguments:
+  commands:
+    One string, which gets split into lines on line endings, or a list of
+    strings.
+
+  args:
+    Positional arguments for ``subprocess.{function}`` (but prefer keyword
+    arguments!)
+
+  on_exception:
+    If ``on_exception`` is ``False``, the default, exceptions from
+    ``subprocess.{function}`` are raised as usual.
+
+    If ``on_exception`` is True, they are ignored.
+
+    If ``on_exception`` is a callable, the line that caused the exception is
+    passed to it.
+
+    If ``on_exception`` is a string, the line causing the exception
+    is printed, prefixed with that string.
+
+  echo:
+    If ``echo`` is ``False``, the default, then commands are silently executed.
+    If ``echo`` is ``True``, commands are printed prefixed with ``$``
+    If ``echo`` is a string, commands are printed prefixed with that string
+    If ``echo`` is callable, then each command is passed to it.
+
+  iterate:
+    If ``iterate`` is ``False``, the default, then a list of results is
+    returned.
+
+    Otherwise an iterator of results which is returned, allowing for lazy
+    evaluation.
+
+  encoding:
+    Like the argument to ``subprocess.{{function}}``, except the default  is
+    ``'utf8'``
+
+  kwargs:
+    Named arguments passed on to ``subprocess.{{function}}``
+"""
+
+_CALL_DOC = """
+Run each command with arguments. Return a list of returncodes, one
+for each command executed
+"""
+
+_CHECK_CALL_DOC = """
+Run each command with arguments. If any command has a non-zero exit code,
+raise a ``subprocess.CallProcessError``.
+"""
+
+_CHECK_OUTPUT_DOC = """
+Run each command with arguments. If a command has a non-zero exit code,
+raise a ``subprocess.CallProcessError``.  Otherwise, return the results as a
+list of strings.
+"""
+
+_RUN_DOC = """
+Run each command with arguments. Return a list of
+``subprocess.CompletedProcess`` instances.
+"""
+
+call.__doc__ = _ARGS.format(function='call', summary=_CALL_DOC)
+run.__doc__ = _ARGS.format(function='run', summary=_RUN_DOC)
+check_call.__doc__ = _ARGS.format(
+    function='check_call', summary=_CHECK_CALL_DOC
+)
+check_output.__doc__ = _ARGS.format(
+    function='check_output', summary=_CHECK_OUTPUT_DOC
+)
