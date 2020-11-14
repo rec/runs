@@ -80,7 +80,7 @@ import subprocess
 import sys
 import xmod
 
-__version__ = '0.3.0'
+__version__ = '0.3.2'
 __all__ = 'call', 'check_call', 'check_output', 'run', 'split_commands'
 
 

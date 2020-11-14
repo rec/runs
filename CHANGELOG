@@ -1,3 +1,9 @@
+## v0.3.2 - 20/11/14
+
+* Better signatures for functions
+* Much more documentation
+* Handle line continuations
+
 ## v0.3.1 - 20/11/09
 
 * Update documentation
