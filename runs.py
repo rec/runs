@@ -49,18 +49,15 @@ EXAMPLES:
           -MMD -MP -MF -c src/tests.cpp -o build/./src/tests.cpp.o
      ''')
 
-
 NOTES:
 
-* Pipes and redirection do not work
+* I can see no good way to make pipes or redirection work.
 
 .. code-block:: python
 
     import runs
     result = runs.check_output('echo "foo" > bar.txt')
-    assert result == ['foo > bar.txt\\n']
-
-I can see no good way to make pipes or redirection work.
+    assert result == ['foo > bar.txt\\n']  # :-/
 
 *  Environment variables are not expanded
 
@@ -152,36 +149,31 @@ def split_commands(lines, echo=None):
     yield from emit()
 
 
-def _wrap(name):
-    @functools.wraps(getattr(subprocess, name))
-    def wrapped(commands, *args, iterate=False, encoding='utf8', **kwargs):
-        it = _run(name, commands, *args, encoding=encoding, **kwargs)
+def _wrap(name, summary):
+    def wrapped(
+        commands,
+        *args,
+        iterate=False,
+        encoding='utf8',
+        on_exception=None,
+        echo=False,
+        **kwargs,
+    ):
+        kwargs.update(echo=echo, encoding=encoding, on_exception=on_exception)
+        it = _run(name, commands, *args, **kwargs)
         if iterate:
             return it
         return list(it)
 
+    wrapped.__name__ = name
+    wrapped.__doc__ = _ARGS.format(function=name, summary=summary)
+
     return wrapped
 
 
-call = _wrap('call')
-check_call = _wrap('check_call')
-check_output = _wrap('check_output')
-run = _wrap('run')
-
-xmod(run, __name__)
-
-
 _ARGS = """
-  {function}(
-    commands,
-    *args,
-    on_exception=False,
-    echo=False,
-    iterate=False,
-    encoding='utf8',
-    **kwargs)
-  {summary}
-  See the help for ``subprocess.{function}`` for more information.
+{summary}
+See the help for ``subprocess.{function}()`` for more information.
 
 Arguments:
   commands:
@@ -189,12 +181,12 @@ Arguments:
     strings.
 
   args:
-    Positional arguments for ``subprocess.{function}`` (but prefer keyword
+    Positional arguments for ``subprocess.{function}()`` (but prefer keyword
     arguments!)
 
   on_exception:
     If ``on_exception`` is ``False``, the default, exceptions from
-    ``subprocess.{function}`` are raised as usual.
+    ``subprocess.{function}()`` are raised as usual.
 
     If ``on_exception`` is True, they are ignored.
 
@@ -218,39 +210,44 @@ Arguments:
     evaluation.
 
   encoding:
-    Like the argument to ``subprocess.{{function}}``, except the default  is
+    Like the argument to ``subprocess.{function}()``, except the default  is
     ``'utf8'``
 
   kwargs:
-    Named arguments passed on to ``subprocess.{{function}}``
+    Named arguments passed on to ``subprocess.{function}()``
 """
 
-_CALL_DOC = """
+call = _wrap(
+    'call',
+    """
 Run each command with arguments. Return a list of returncodes, one
 for each command executed
-"""
+""",
+)
 
-_CHECK_CALL_DOC = """
+check_call = _wrap(
+    'check_call',
+    """
 Run each command with arguments. If any command has a non-zero exit code,
 raise a ``subprocess.CallProcessError``.
-"""
+""",
+)
 
-_CHECK_OUTPUT_DOC = """
+check_output = _wrap(
+    'check_output',
+    """
 Run each command with arguments. If a command has a non-zero exit code,
 raise a ``subprocess.CallProcessError``.  Otherwise, return the results as a
 list of strings.
-"""
+""",
+)
 
-_RUN_DOC = """
-Run each command with arguments. Return a list of
+run = _wrap(
+    'run',
+    """
+Run each command with arguments. Return a list of \
 ``subprocess.CompletedProcess`` instances.
-"""
+""",
+)
 
-call.__doc__ = _ARGS.format(function='call', summary=_CALL_DOC)
-run.__doc__ = _ARGS.format(function='run', summary=_RUN_DOC)
-check_call.__doc__ = _ARGS.format(
-    function='check_call', summary=_CHECK_CALL_DOC
-)
-check_output.__doc__ = _ARGS.format(
-    function='check_output', summary=_CHECK_OUTPUT_DOC
-)
+xmod(run, __name__)
