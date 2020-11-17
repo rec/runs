@@ -250,4 +250,4 @@ Run each command with arguments. Return a list of \
 """,
 )
 
-xmod(run, __name__)
+xmod(run, __name__, mutable=True)
