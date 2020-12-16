@@ -2,7 +2,7 @@
 🏃 runs: a better subprocess 🏃
 ---------------------------------------------------------------------
 
-`runs` has improved versions of `2call()`, `check_call()`, `check_output()`,
+`runs` has improved versions of `call()`, `check_call()`, `check_output()`,
 and `run()` from Python's `subprocess` module that handle multiple commands and
 blocks of text, fix some defects, and add some features.
 
