@@ -190,13 +190,18 @@ def _wrap(name, summary):
         encoding='utf8',
         on_exception=None,
         echo=False,
+        merge=False,
+        always_list=False,
         **kwargs,
     ):
         kwargs.update(echo=echo, encoding=encoding, on_exception=on_exception)
+        if merge:
+            kwargs.update(stderr=subprocess.STDOUT)
         it = _run(name, commands, *args, **kwargs)
         if iterate:
             return it
-        return list(it)
+        result = list(it)
+        return result if always_list or len(result) != 1 else result[0]
 
     wrapped.__name__ = name
     wrapped.__doc__ = _ARGS.format(function=name, summary=summary)
@@ -234,6 +239,14 @@ Arguments:
     If `echo` is `True`, commands are printed prefixed with `$`
     If `echo` is a string, commands are printed prefixed with that string
     If `echo` is callable, then each command is passed to it.
+
+  merge:
+    If True, stderr is set to be subprocess.STDOUT
+
+  always_list:
+    If True, the result is always a list.
+    If False, the result is a list, unless the input is of length 1, when
+    the first element is returned.
 
   iterate:
     If `iterate` is `False`, the default, then a list of results is

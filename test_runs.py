@@ -11,15 +11,27 @@ def assert_called(mock, *args, **kwds):
 
 @mock.patch('runs.subprocess.run', autospec=True)
 class TestRunsMock(unittest.TestCase):
-    def test_simple(self, run):
-        results = runs('hello world')
+    def test_simple1(self, run):
+        results = runs('hello world', always_list=True)
         assert len(results) == 1
 
         assert_called(run, ['hello', 'world'])
 
-    def test_shell(self, run):
-        results = runs('hello world', shell=True)
+    def test_simple2(self, run):
+        results = runs('hello world')
+        assert len(results) == 0
+
+        assert_called(run, ['hello', 'world'])
+
+    def test_shell1(self, run):
+        results = runs('hello world', shell=True, always_list=True)
         assert len(results) == 1
+
+        assert_called(run, 'hello world', shell=True)
+
+    def test_shell2(self, run):
+        results = runs('hello world', shell=True)
+        assert len(results) == 0
 
         assert_called(run, 'hello world', shell=True)
 
@@ -69,7 +81,7 @@ class TestRunsMock(unittest.TestCase):
 class TestRunsActual(unittest.TestCase):
     def test_echo(self):
         results = runs.check_output('echo "a test"')
-        assert results == ['a test\n']
+        assert results == 'a test\n'
 
     def test_many(self):
         lines = """
@@ -85,10 +97,10 @@ class TestRunsActual(unittest.TestCase):
     @tdir
     def test_shell(self):
         r = runs.check_output('echo BEGIN > foo.txt', shell=True)
-        assert len(r) == 1
+        assert len(r) == 16
         p = Path('foo.txt')
         assert not p.exists()
-        assert r == ['BEGIN > foo.txt\n']
+        assert r == 'BEGIN > foo.txt\n'
 
 
 DIR = {
