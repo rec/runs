@@ -31,7 +31,7 @@ if __name__ == '__main__':
         author_email='tom@swirly.com',
         url='https://github.com/rec/runs',
         py_modules=['runs'],
-        description='Runs a block of text as a subrprocess',
+        description='🏃 Runs a block of text as a subprocess 🏃',
         long_description=open('README.rst').read(),
         license='MIT',
         classifiers=_classifiers,
