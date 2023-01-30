@@ -114,11 +114,9 @@ DIR = {
     'LICENSE',
     'README.rst',
     'pyproject.toml',
-    'requirements.txt',
     'runs.py',
     'setup.cfg',
     'setup.py',
-    'test_requirements.txt',
     'test_runs.py',
     'tox.ini',
 }
