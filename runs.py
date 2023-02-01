@@ -44,7 +44,8 @@ which are ignored.
 The replacement functions also add optional logging, error handling,
 and lazy evaluation, and use UTF-8 encoding by default.
 
-The module `runs` is callable - `runs()` is a synonym for `runs.run()`.
+The module `runs` is callable - `runs()` glues stderr and stdout into a string
+and returns them, amd is a synonym for `runs.check_output(merge=True)`.
 
 EXAMPLES:
 
@@ -114,7 +115,7 @@ import sys
 import xmod
 
 __version__ = '1.1.0'
-__all__ = 'call', 'check_call', 'check_output', 'run', 'split_commands'
+__all__ = 'call', 'check_call', 'check_output', 'run', 'runs', 'split_commands'
 
 
 def _run(name, commands, *args, on_exception=None, echo=False, **kwargs):
@@ -245,8 +246,8 @@ Arguments:
 
   always_list:
     If True, the result is always a list.
-    If False, the result is a list, unless the input is of length 1, when
-    the first element is returned.
+    If False, the default, if the result contains a single element,
+    that element is returned, not a list.
 
   iterate:
     If `iterate` is `False`, the default, then a list of results is
@@ -280,7 +281,8 @@ check_output = _wrap(
     'check_output',
     """Call `subprocess.check_output()` on each command.
 If a command has a non-zero exit code, raise a `subprocess.CallProcessError`.
-Otherwise, return the results as a list of strings, one for each command.""",
+Otherwise, return the results as a list of strings, one for each command.
+""",
 )
 
 run = _wrap(
@@ -289,4 +291,6 @@ run = _wrap(
 Return a list of `subprocess.CompletedProcess` instances.""",
 )
 
-xmod(run, __name__, mutable=True)
+runs = functools.partial(check_output, merge=True)
+
+xmod(runs, __name__, mutable=True)
