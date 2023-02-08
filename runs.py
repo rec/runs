@@ -6,7 +6,6 @@
 and `run()` from Python's `subprocess` module that handle multiple commands and
 blocks of text, fix some defects, and add some features.
 
-.. code-block:: python
 
     import runs
 
@@ -48,7 +47,6 @@ The module `runs` is callable - `runs()` is a synonym for `runs.run()`.
 
 EXAMPLES:
 
-.. code-block:: python
 
     # `runs()` or `runs.run()` writes to stdout and stderr just as if you'd run
     # the commands from the terminal
@@ -84,21 +82,18 @@ you can't just paste your shell scripts in:
 
 * Redirection doesn't work.
 
-.. code-block:: python
 
     result = runs.check_output('echo foo > bar.txt')
     assert result == ['foo > bar.txt\\n']
 
 * Pipes don't work.
 
-.. code-block:: python
 
     result = runs.check_output('echo foo | wc')
     assert result == ['foo | wc \\n']
 
 *  Environment variables are not expanded in command lines
 
-.. code-block:: python
 
     result = runs.check_output('echo $FOO', env={'FOO': 'bah!'})
     assert result == ['$FOO\\n']
