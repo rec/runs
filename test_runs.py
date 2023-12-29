@@ -1,8 +1,10 @@
+import unittest
 from pathlib import Path
 from unittest import mock
-import runs
+
 import tdir
-import unittest
+
+import runs
 
 
 def assert_called(mock, *args, **kwds):

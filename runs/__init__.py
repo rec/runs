@@ -106,6 +106,7 @@ import functools
 import shlex
 import subprocess
 import sys
+
 import xmod
 
 __all__ = 'call', 'check_call', 'check_output', 'run', 'split_commands'
@@ -283,4 +284,4 @@ run = _wrap(
 Return a list of `subprocess.CompletedProcess` instances.""",
 )
 
-xmod(run, __name__, mutable=True)
+xmod.xmod(run, __name__, mutable=True)

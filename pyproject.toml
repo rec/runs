@@ -30,10 +30,10 @@ ruff = "*"
 
 [tool.coverage.run]
 branch = true
-source = "runs"
+source = ["runs"]
 
 [tool.coverage.report]
-fail_under = "50"
+fail_under = 80
 skip_covered = true
 exclude_lines = [
     "pragma: no cover",
