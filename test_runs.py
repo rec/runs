@@ -92,7 +92,9 @@ class TestRunsActual(unittest.TestCase):
         begin, ls, end = runs.check_output(lines)
         assert begin == 'BEGIN\n'
         assert end == 'END\n'
-        assert DIR.issubset(ls.splitlines())
+        diff = DIR.difference(ls.splitlines())
+        print(*diff)
+        assert not diff
 
     @tdir
     def test_shell(self):
@@ -106,7 +108,6 @@ class TestRunsActual(unittest.TestCase):
 DIR = {
     '.',
     '..',
-    '.coveragerc',
     '.git',
     '.gitignore',
     '.travis.yml',
@@ -115,8 +116,6 @@ DIR = {
     'README.rst',
     'pyproject.toml',
     'runs.py',
-    'setup.cfg',
-    'setup.py',
     'test_runs.py',
     'tox.ini',
 }
