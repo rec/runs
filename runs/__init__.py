@@ -106,13 +106,21 @@ import functools
 import shlex
 import subprocess
 import sys
+import typing as t
 
 import xmod
 
 __all__ = 'call', 'check_call', 'check_output', 'run', 'split_commands'
 
 
-def _run(name, commands, *args, on_exception=None, echo=False, **kwargs):
+def _run(
+    name: str,
+    commands: t.Sequence[str],
+    *args: t.Any,
+    on_exception: t.Any = None,
+    echo: t.Union[bool, str, None, t.Callable[..., t.Any]] = False,
+    **kwargs: t.Any,
+) -> t.Iterator[t.Any]:
     if echo is True:
         echo = '$'
 
@@ -132,7 +140,7 @@ def _run(name, commands, *args, on_exception=None, echo=False, **kwargs):
     shell = kwargs.get('shell')
 
     for line in split_commands(commands, echo):
-        cmd = shlex.split(line, comments=True)
+        cmd: t.Union[str, t.Sequence[str]] = shlex.split(line, comments=True)
         if shell:
             cmd = ' '.join(shlex.quote(c) for c in cmd)
 
@@ -148,10 +156,10 @@ def _run(name, commands, *args, on_exception=None, echo=False, **kwargs):
             yield result
 
 
-def split_commands(lines, echo=None):
-    waiting = []
+def split_commands(lines: t.Sequence[str], echo: t.Any = None) -> t.Iterator[str]:
+    waiting: t.List[str] = []
 
-    def emit():
+    def emit() -> t.Iterator[str]:
         parts = ''.join(waiting).strip()
         waiting.clear()
         if parts:
@@ -177,18 +185,18 @@ def split_commands(lines, echo=None):
     yield from emit()
 
 
-def _wrap(name, summary):
+def _wrap(name: str, summary: str) -> t.Callable[..., t.Any]:
     def wrapped(
-        commands,
-        *args,
-        iterate=False,
-        encoding='utf8',
-        on_exception=None,
-        echo=False,
-        merge=False,
-        always_list=False,
-        **kwargs,
-    ):
+        commands: t.Sequence[str],
+        *args: t.Any,
+        iterate: bool = False,
+        encoding: str = 'utf8',
+        on_exception: t.Any = None,
+        echo: bool = False,
+        merge: bool = False,
+        always_list: bool = False,
+        **kwargs: t.Any,
+    ) -> t.Union[t.Iterable[str], str]:
         kwargs.update(echo=echo, encoding=encoding, on_exception=on_exception)
         if merge:
             kwargs.update(stderr=subprocess.STDOUT)
