@@ -1,27 +1,46 @@
-[tool.doks]
-auto = true
-
-[tool.poetry]
+[project]
 name = "runs"
 version = "1.2.2"
 description = "🏃 Run a block of text as a subprocess 🏃"
-authors = ["Tom Ritchford <tom@swirly.com>"]
-license = "MIT"
+authors = [{ name = "Tom Ritchford", email = "tom@swirly.com" }]
+requires-python = ">=3.8"
 readme = "README.rst"
+license = "MIT"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+dependencies = ["xmod"]
 
-[tool.poetry.dependencies]
-python = ">=3.8"
-xmod = "*"
+[tool.doks]
+auto = true
 
-[tool.poetry.group.dev.dependencies]
-black = "*"
-coverage = "*"
-flake8 = "*"
-isort = "*"
-mypy = "*"
-pytest = "*"
-tdir = "*"
-ruff = "*"
+[dependency-groups]
+dev = [
+    "black",
+    "coverage",
+    "flake8",
+    "isort",
+    "mypy",
+    "pytest",
+    "tdir",
+    "ruff",
+]
+
+[tool.uv]
+
+[tool.uv.build-backend]
+module-root = ""
+
+[build-system]
+requires = ["uv_build>=0.9.0,<0.10.0"]
+build-backend = "uv_build"
 
 [tool.coverage.run]
 branch = true
@@ -46,6 +65,3 @@ quote-style = "single"
 
 [tool.mypy]
 strict = true
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
