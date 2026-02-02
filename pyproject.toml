@@ -23,14 +23,12 @@ auto = true
 
 [dependency-groups]
 dev = [
-    "black",
     "coverage",
-    "flake8",
-    "isort",
-    "mypy",
     "pytest",
     "tdir",
     "ruff",
+    "pyupgrade>=3.21.2",
+    "ty>=0.0.14",
 ]
 
 [tool.uv]
@@ -49,12 +47,7 @@ source = ["runs"]
 [tool.coverage.report]
 fail_under = 80
 skip_covered = true
-exclude_lines = [
-    "pragma: no cover",
-    "if False:",
-    "if __name__ == .__main__.:",
-    "raise NotImplementedError"
-]
+exclude_lines = ["pragma: no cover", "if False:", "if __name__ == .__main__.:", "raise NotImplementedError"]
 
 
 [tool.ruff]
