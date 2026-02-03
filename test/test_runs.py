@@ -118,6 +118,5 @@ DIR = {
     'README.rst',
     'pyproject.toml',
     'runs',
-    'test_runs.py',
     'tox.ini',
 }

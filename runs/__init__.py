@@ -142,7 +142,7 @@ def _run(
     for line in split_commands(commands, echo):
         cmd: t.Union[str, t.Sequence[str]] = shlex.split(line, comments=True)
         if shell:
-            cmd = ' '.join(shlex.quote(c) for c in cmd)
+            cmd = shlex.join(cmd)
 
         try:
             result = function(cmd, *args, **kwargs)
